@@ -6,7 +6,6 @@ import Spinner from '@/components/ui/Spinner';
 import Card from '@/components/ui/Card';
 import CardHeader from '@/components/ui/CardHeader';
 import showToast from '@/utils/showToast';
-import { RPCError, RPCErrorCode } from 'magic-sdk';
 
 const Farcaster = ({ token, setToken }: LoginProps) => {
   const { magic } = useMagic();
@@ -21,7 +20,6 @@ const Farcaster = ({ token, setToken }: LoginProps) => {
     try {
       setLoadingFlag(true);
       const result = await magic?.farcaster.login();
-      debugger
       const metadata = await magic?.user.getInfo();
 
       if (!result || !metadata?.publicAddress) {
