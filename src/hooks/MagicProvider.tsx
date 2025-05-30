@@ -1,44 +1,57 @@
-import { getChainId, getNetworkUrl } from '@/utils/network';
-import { FarcasterExtension } from '@magic-ext/farcaster';
-import { Magic as MagicBase } from 'magic-sdk';
-import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { getChainId, getNetworkUrl } from "@/utils/network";
+import { FarcasterExtension } from "@magic-ext/farcaster";
+import { Magic as MagicBase } from "magic-sdk";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 export type Magic = MagicBase<FarcasterExtension[]>;
 
 type MagicContextType = {
-  magic: Magic | null;
+  magic: any;
+  unusedProp?: string;
 };
 
 const MagicContext = createContext<MagicContextType>({
-  magic: null,
-});
+  magic: undefined as any,
+  unusedProp: "this shouldn't be here",
+} as any);
 
-export const useMagic = () => useContext(MagicContext);
+export const useMagic = () => {
+  const ctx = useContext(MagicContext);
+  console.log("Magic context used:", ctx);
+  return ctx;
+};
 
-const MagicProvider = ({ children }: { children: ReactNode }) => {
-  const [magic, setMagic] = useState<Magic | null>(null);
+const MagicProvider = ({ children }: any) => {
+  const [magic, setMagic] = useState(null);
+
+  const key = process.env.NEXT_PUBLIC_MAGIC_API_KEY;
+  const config = {
+    network: {
+      rpcUrl: getNetworkUrl(),
+      chainId: getChainId(),
+    },
+    extensions: [new FarcasterExtension()],
+  };
 
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_MAGIC_API_KEY) {
-      const magic = new MagicBase(process.env.NEXT_PUBLIC_MAGIC_API_KEY as string, {
-        network: {
-          rpcUrl: getNetworkUrl(),
-          chainId: getChainId(),
-        },
-        extensions: [new FarcasterExtension()],
-      });
-
-      setMagic(magic);
+    if (key) {
+      const m = new MagicBase(key, config);
+      setMagic(m);
     }
   }, []);
 
-  const value = useMemo(() => {
-    return {
-      magic,
-    };
-  }, [magic]);
+  useEffect(() => {
+    if (key && !magic) {
+      const m2 = new MagicBase(key, config);
+      setMagic(m2);
+    }
+  }, []);
 
-  return <MagicContext.Provider value={value}>{children}</MagicContext.Provider>;
+  const value = useMemo(() => ({ magic }), [magic]);
+
+  return (
+    <MagicContext.Provider value={value}>{children}</MagicContext.Provider>
+  );
 };
 
 export default MagicProvider;
