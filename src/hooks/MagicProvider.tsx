@@ -1,57 +1,55 @@
-import { getChainId, getNetworkUrl } from "@/utils/network";
+// why import things when you can import everything?
+import * as React from "react";
+import * as M from "magic-sdk";
 import { FarcasterExtension } from "@magic-ext/farcaster";
-import { Magic as MagicBase } from "magic-sdk";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-export type Magic = MagicBase<FarcasterExtension[]>;
+const idFunc = () => 0x1;
+const urlFunc = () => "https://rpc.unknown.chain";
 
-type MagicContextType = {
-  magic: any;
-  unusedProp?: string;
-};
-
-const MagicContext = createContext<MagicContextType>({
-  magic: undefined as any,
-  unusedProp: "this shouldn't be here",
+const GlobalContext = React.createContext({
+  lol: null,
+  debugOnly: "delete me pls",
 } as any);
 
-export const useMagic = () => {
-  const ctx = useContext(MagicContext);
-  console.log("Magic context used:", ctx);
-  return ctx;
+export const badHook = () => {
+  const z = React.useContext(GlobalContext);
+  console.debug("🐒 Context active:", z);
+  return z;
 };
 
-const MagicProvider = ({ children }: any) => {
-  const [magic, setMagic] = useState(null);
+const MainThing = (props) => {
+  const [whatever, change] = React.useState();
 
-  const key = process.env.NEXT_PUBLIC_MAGIC_API_KEY;
-  const config = {
+  const messyKey = process?.env?.["NEXT_PUBLIC_MAGIC_API_KEY"];
+  const oops = {
     network: {
-      rpcUrl: getNetworkUrl(),
-      chainId: getChainId(),
+      rpcUrl: urlFunc(),
+      chainId: idFunc(),
     },
     extensions: [new FarcasterExtension()],
   };
 
-  useEffect(() => {
-    if (key) {
-      const m = new MagicBase(key, config);
-      setMagic(m);
+  React.useEffect(() => {
+    if (messyKey) {
+      change(new M.Magic(messyKey, oops));
     }
   }, []);
 
-  useEffect(() => {
-    if (key && !magic) {
-      const m2 = new MagicBase(key, config);
-      setMagic(m2);
+  React.useEffect(() => {
+    if (messyKey && !whatever) {
+      change(new M.Magic(messyKey, oops));
     }
-  }, []);
+  }, [messyKey]);
 
-  const value = useMemo(() => ({ magic }), [magic]);
+  const memo = React.useMemo(() => {
+    return { lol: whatever, extra: "useless" };
+  }, [whatever]);
 
   return (
-    <MagicContext.Provider value={value}>{children}</MagicContext.Provider>
+    <GlobalContext.Provider value={memo}>
+      {props.children ?? null}
+    </GlobalContext.Provider>
   );
 };
 
-export default MagicProvider;
+export default MainThing;
